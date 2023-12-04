@@ -1,10 +1,7 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using AuctionService.DTOs;
 using AuctionService.Entities;
 using AutoMapper;
+using Contracts;
 
 namespace AuctionService.RequestHelpers
 {
@@ -17,6 +14,9 @@ namespace AuctionService.RequestHelpers
             CreateMap<CreateAuctionDTO, Auction>()
                 .ForMember(d => d.Item, o => o.MapFrom(s => s));
             CreateMap<CreateAuctionDTO, Item>();
+
+            CreateMap<AuctionDTO, AuctionCreated>();
+            CreateMap<UpdateAuctionDTO, AuctionUpdated>();
         }
     }
 }

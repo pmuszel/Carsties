@@ -30,7 +30,7 @@ namespace SearchService.Data
 
                 var items = await httpClient.GetItemsForSearchDb();
 
-                System.Console.WriteLine(items.Count + "returned from auction service");
+                System.Console.WriteLine(items.Count + " returned from auction service");
 
                 if(items.Count > 0)
                 {
