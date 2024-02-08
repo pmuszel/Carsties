@@ -101,6 +101,19 @@ services:
     depends_on:
       - mongo
       - rabitmq
+  notify-svc:
+    image: pmuszel/notify-svc:latest
+    build: 
+      context: .
+      dockerfile: src/NotificationService/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:80
+      - RabbitMq__Host=rabitmq
+    ports:
+      - 7004:80
+    depends_on:
+      - rabitmq
 # volumes:
 #   pgdata:
 #   mongodata:

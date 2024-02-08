@@ -17,7 +17,6 @@ COPY tests/AuctionService.UnitTests/AuctionService.UnitTests.csproj tests/Auctio
 COPY tests/AuctionService.IntegrationTests/AuctionService.IntegrationTests.csproj tests/AuctionService.IntegrationTests/AuctionService.IntegrationTests.csproj
 
 
-
 #restore package deps
 
 
@@ -25,12 +24,12 @@ RUN dotnet restore Carsties.sln
 
 #copy the app folders over
 
-COPY src/SearchService src/SearchService
+COPY src/NotificationService src/NotificationService
 COPY src/Contracts src/Contracts
 
-WORKDIR /app/src/SearchService
+WORKDIR /app/src/NotificationService
 
-RUN dotnet publish -c Release -o /app/src/out
+RUN dotnet publish NotificationService.csproj -c Release -o /app/src/out
 
 #Build runtime image
 
@@ -38,4 +37,4 @@ FROM mcr.microsoft.com/dotnet/aspnet:7.0
 
 WORKDIR /app
 COPY --from=build /app/src/out .
-ENTRYPOINT [ "dotnet",  "SearchService.dll"]
+ENTRYPOINT [ "dotnet",  "NotificationService.dll"]
