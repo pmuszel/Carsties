@@ -1,3 +1,9 @@
+networks:
+  custom:
+    ipam:
+      config:
+        - subnet: 10.5.0.0/16
+
 services:
   postgres:
     image: postgres
@@ -8,6 +14,8 @@ services:
     volumes:
       # - pgdata:/var/lib/postgresql/data
       - /var/lib/postgresql/data
+    networks:
+      custom:
   mongo:
     image: mongo
     environment:
@@ -18,11 +26,15 @@ services:
     volumes:
       # - mongodata:/var/lib/mongodb/data
       - /var/lib/mongodb/data
+    networks:
+      custom:
   rabitmq:
     image: rabbitmq:3-management-alpine
     ports:
       - 5672:5672
       - 15672:15672
+    networks:
+      custom:
   auction-svc:
     image: pmuszel/auction-svc:latest
     build: 
@@ -42,6 +54,8 @@ services:
     ports:
       - 7001:80
       - 7777:7777
+    networks:
+      custom:
     depends_on:
       - postgres
       - rabitmq
@@ -58,6 +72,8 @@ services:
       - AuctionServiceUrl=http://auction-svc
     ports:
       - 7002:80
+    networks:
+      custom:
     depends_on:
       - mongo
       - rabitmq
@@ -69,9 +85,12 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Docker
       - ASPNETCORE_URLS=http://+:80
+      - ClientApp=http://app.carsties.com
       - ConnectionStrings__DefaultConnection=Server=postgres:5432;User Id=postgres;Password=postgrespw;Database=identity
-    ports:
-      - 5000:80
+      - VIRTUAL_HOST=id.carsties.com
+    networks:
+      custom:
+        ipv4_address: 10.5.0.200
     depends_on:
       - postgres
   gateway-svc:
@@ -82,8 +101,10 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Docker
       - ASPNETCORE_URLS=http://+:80
-    ports:
-      - 6001:80
+      - ClientApp=https://app.carsties.com
+      - VIRTUAL_HOST=api.carsties.com
+    networks:
+      custom:
   bid-svc:
     image: pmuszel/bid-svc:latest
     build: 
@@ -98,6 +119,8 @@ services:
       - GrpcAuction=http://auction-svc:7777
     ports:
       - 7003:80
+    networks:
+      custom:
     depends_on:
       - mongo
       - rabitmq
@@ -112,8 +135,42 @@ services:
       - RabbitMq__Host=rabitmq
     ports:
       - 7004:80
+    networks:
+      custom:
     depends_on:
       - rabitmq
+  web-app:
+    image: pmuszel/web-app:latest
+    build: 
+      context: .
+      dockerfile: frontend/web-app/Dockerfile
+    volumes:
+      - /var/lib/web/data
+    networks:
+      custom:
+    extra_hosts:
+      - id.carsties.com:10.5.0.200
+    environment:
+      - NEXTAUTH_SECRET=somethingrellysecret
+      - NEXTAUTH_URL=http://app.carsties.com
+      - NEXTAUTH_URL_INTERNAL=http://web-app:3000
+      - API_URL=http://gateway-svc/
+      - ID_URL=http://id.carsties.com
+      - NEXT_PUBLIC_NOTIFY_URL=http://gateway-svc/notifications
+      - CLIENT_SECRET=secret
+      - VIRTUAL_HOST=app.carsties.com
+      - VIRTUAL_PORT=3000
+
+  nginx-proxy:
+    image: nginxproxy/nginx-proxy
+    ports:
+      - 80:80
+      - 443:443
+    networks:
+      custom:
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+      - ./devcerts:/etc/nginx/certs
 # volumes:
 #   pgdata:
 #   mongodata:
